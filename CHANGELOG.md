@@ -5,9 +5,9 @@ Entries are listed in reverse chronological order.
 ## Unreleased
 
 * Migrated to `pasta_curves 0.3`,
-* Added support for `no-std` builds, via new (default-enabled) `std` feature flag.
-  Crate still depends on `alloc`. Module `frost` is supported on `std` feature
-  only.
+* Added support for `no-std` builds, via new (default-enabled) `std` and `alloc`
+  feature flags. Module `batch` is supported on `alloc` feature only. Module
+  `frost` is supported on `std` feature only.
 
 ## 0.1.0
 

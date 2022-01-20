@@ -1,7 +1,10 @@
+#[cfg(feature = "std")]
 use rand::thread_rng;
 
+#[cfg(feature = "std")]
 use reddsa::*;
 
+#[cfg(feature = "std")]
 #[test]
 fn spendauth_batch_verify() {
     let mut rng = thread_rng();
@@ -16,6 +19,7 @@ fn spendauth_batch_verify() {
     assert!(batch.verify(rng).is_ok());
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn binding_batch_verify() {
     let mut rng = thread_rng();
@@ -30,6 +34,7 @@ fn binding_batch_verify() {
     assert!(batch.verify(rng).is_ok());
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn alternating_batch_verify() {
     let mut rng = thread_rng();
@@ -57,6 +62,7 @@ fn alternating_batch_verify() {
     assert!(batch.verify(rng).is_ok());
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn bad_batch_verify() {
     let mut rng = thread_rng();

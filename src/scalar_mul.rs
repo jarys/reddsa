@@ -10,10 +10,13 @@
 // - Henry de Valence <hdevalence@hdevalence.ca>
 // - Deirdre Connolly <deirdre@zfnd.org>
 
-use alloc::vec::Vec;
-use core::{borrow::Borrow, fmt::Debug};
+use core::borrow::Borrow;
+#[cfg(feature = "alloc")]
+use core::fmt::Debug;
 
-use jubjub::{ExtendedNielsPoint, ExtendedPoint};
+#[cfg(feature = "alloc")]
+use jubjub::ExtendedNielsPoint;
+use jubjub::ExtendedPoint;
 
 pub trait NonAdjacentForm {
     fn non_adjacent_form(&self, w: usize) -> [i8; 256];
@@ -125,9 +128,11 @@ impl NonAdjacentForm for jubjub::Scalar {
 }
 
 /// Holds odd multiples 1A, 3A, ..., 15A of a point A.
+#[cfg(feature = "alloc")]
 #[derive(Copy, Clone)]
 pub(crate) struct LookupTable5<T>(pub(crate) [T; 8]);
 
+#[cfg(feature = "alloc")]
 impl<T: Copy> LookupTable5<T> {
     /// Given public, odd \\( x \\) with \\( 0 < x < 2^4 \\), return \\(xA\\).
     pub fn select(&self, x: usize) -> T {
@@ -138,12 +143,14 @@ impl<T: Copy> LookupTable5<T> {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<T: Debug> Debug for LookupTable5<T> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "LookupTable5({:?})", self.0)
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<'a> From<&'a ExtendedPoint> for LookupTable5<ExtendedNielsPoint> {
     #[allow(non_snake_case)]
     fn from(A: &'a ExtendedPoint) -> Self {
@@ -168,32 +175,43 @@ impl VartimeMultiscalarMul for ExtendedPoint {
         I::Item: Borrow<Self::Scalar>,
         J: IntoIterator<Item = Option<ExtendedPoint>>,
     {
-        let nafs: Vec<_> = scalars
-            .into_iter()
-            .map(|c| c.borrow().non_adjacent_form(5))
-            .collect();
+        #[cfg(feature = "alloc")]
+        {
+            use alloc::vec::Vec;
 
-        let lookup_tables = points
-            .into_iter()
-            .map(|P_opt| P_opt.map(|P| LookupTable5::<ExtendedNielsPoint>::from(&P)))
-            .collect::<Option<Vec<_>>>()?;
+            let nafs: Vec<_> = scalars
+                .into_iter()
+                .map(|c| c.borrow().non_adjacent_form(5))
+                .collect();
 
-        let mut r = ExtendedPoint::identity();
+            let lookup_tables = points
+                .into_iter()
+                .map(|P_opt| P_opt.map(|P| LookupTable5::<ExtendedNielsPoint>::from(&P)))
+                .collect::<Option<Vec<_>>>()?;
 
-        for i in (0..256).rev() {
-            let mut t = r.double();
+            let mut r = ExtendedPoint::identity();
 
-            for (naf, lookup_table) in nafs.iter().zip(lookup_tables.iter()) {
-                if naf[i] > 0 {
-                    t = &t + &lookup_table.select(naf[i] as usize);
-                } else if naf[i] < 0 {
-                    t = &t - &lookup_table.select(-naf[i] as usize);
+            for i in (0..256).rev() {
+                let mut t = r.double();
+
+                for (naf, lookup_table) in nafs.iter().zip(lookup_tables.iter()) {
+                    if naf[i] > 0 {
+                        t = &t + &lookup_table.select(naf[i] as usize);
+                    } else if naf[i] < 0 {
+                        t = &t - &lookup_table.select(-naf[i] as usize);
+                    }
                 }
+
+                r = t;
             }
 
-            r = t;
+            Some(r)
         }
-
-        Some(r)
+        #[cfg(not(feature = "alloc"))]
+        scalars
+            .into_iter()
+            .map(|c| c.borrow().clone())
+            .zip(points.into_iter())
+            .try_fold(ExtendedPoint::identity(), |acc, (s, p)| Some(acc + p? * s))
     }
 }
