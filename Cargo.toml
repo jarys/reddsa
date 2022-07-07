@@ -26,10 +26,16 @@ blake2b_simd = { version = "1", default-features = false }
 byteorder = { version = "1.4", default-features = false }
 group = { version = "0.12", default-features = false }
 jubjub = { version = "0.9", default-features = false }
-pasta_curves = { version = "0.4", default-features = false, features = ["alloc"] }
+#pasta_curves = { version = "0.4", default-features = false, features = ["alloc"] }
 rand_core = { version = "0.6", default-features = false }
 serde = { version = "1", optional = true, features = ["derive"] }
 thiserror = { version = "1.0", optional = true }
+
+[dependencies.pasta_curves]
+git = "https://github.com/jarys/pasta_curves"
+branch = "unboxed-closures"
+default-features = false
+features = ["unboxed_closures"]
 
 [dependencies.zeroize]
 version = "1"
